@@ -36,6 +36,7 @@ namespace minecraft_poker
             Console.WriteLine("Which clicker mode do you need?");
             Console.WriteLine("    (1) Left-Right clicker, useful to prevent your Minecraft Realms from idling...");
             Console.WriteLine("    (2) Left clicker, useful for XP farms...");
+            Console.WriteLine("    (3) Right clicker, also useful for XP farms");
             Console.Write("Enter clicker mode: ");
 
             string clickerModeStr = Console.ReadLine();
@@ -78,7 +79,12 @@ namespace minecraft_poker
 
                     threadedFunction = LeftClicker;
                     break;
-
+                case 3:
+                    Timeout = 2000;
+                    RandomDelta = 10000;
+                    ClickLength = 50;
+                    threadedFunction = RightClicker;
+                    break;
                 default:
                     Console.WriteLine("Unknown clicker mode, exiting...");
                     Console.ReadKey();
@@ -241,5 +247,46 @@ namespace minecraft_poker
             }
 
         }
+
+        public static void RightClicker()
+        {
+            // Catch and focus the app
+            // Inspired by https://stackoverflow.com/a/15292428/1934487
+            Process[] ps = Process.GetProcessesByName("javaw");
+            Process p = ps?.FirstOrDefault();
+            if (p != null)
+            {
+                Console.WriteLine("Found a running Minecraft");
+
+                Console.WriteLine("Bringing the app on focus...");
+                IntPtr h = p.MainWindowHandle;
+                SetForegroundWindow(h);
+
+                // Alternative to SendWait()
+                // Found on https://stackoverflow.com/a/55251816/1934487
+                InputSimulator isim = new InputSimulator();
+
+                Thread.Sleep(2000);
+                Console.WriteLine("Turning Game Menu off...");
+                isim.Keyboard.KeyPress(VirtualKeyCode.ESCAPE);
+
+                double delta;
+                int time;
+                while (true)
+                {
+                    delta = RandomDelta * rnd.NextDouble();
+                    time = Timeout + (int)(delta - 0.5 * RandomDelta);
+                    Thread.Sleep(time);
+
+                    Console.WriteLine("Right click at " + DateTime.Now.ToString());
+                    isim.Mouse.RightButtonDown();
+                    Thread.Sleep(ClickLength);
+                    isim.Mouse.RightButtonUp();
+                }
+            }
+
+        }
     }
 }
+
+
